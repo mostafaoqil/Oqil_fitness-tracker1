@@ -1,0 +1,27 @@
+{
+  "name": "Fitness Tracker - عقيل",
+  "short_name": "Fitness",
+  "description": "Personal fitness tracker with workout log and InBody metrics",
+  "start_url": "/Oqil_fitness-tracker1/",
+  "scope": "/Oqil_fitness-tracker1/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0d1a",
+  "theme_color": "#ff6b00",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192x192/ff6b00/ffffff?text=FT",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://via.placeholder.com/512x512/ff6b00/ffffff?text=FT",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
