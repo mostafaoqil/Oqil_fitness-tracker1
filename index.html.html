@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="theme-color" content="#0d0d1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<title>Fitness Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d1a;
+  --bg2: #141428;
+  --bg3: #1c1c35;
+  --card: #1a1a30;
+  --border: #2a2a45;
+  --orange: #ff6b00;
+  --orange2: #ff8c00;
+  --orange-glow: rgba(255,107,0,0.18);
+  --green: #00e676;
+  --red: #ff4444;
+  --yellow: #ffd740;
+  --blue: #29b6f6;
+  --text: #f0f0ff;
+  --muted: #8888aa;
+  --r: 14px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Noise overlay ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0; opacity: .4;
+}
+
+/* ── Header ── */
+.top-bar {
+  position: sticky; top: 0; z-index: 100;
+  background: linear-gradient(135deg, #0d0d1a 0%, #1a0a00 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(12px);
+}
+.top-bar .logo { font-family: 'Bebas Neue', cursive; font-size: 22px; letter-spacing: 2px; color: var(--orange); }
+.top-bar .subtitle { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+/* ── Nav ── */
+nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+  background: rgba(13,13,26,0.96);
+  border-top: 1px solid var(--border);
+  display: flex;
+  backdrop-filter: blur(20px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+nav button {
+  flex: 1; background: none; border: none; color: var(--muted);
+  padding: 10px 4px 8px; cursor: pointer; transition: color .2s;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+}
+nav button .ico { font-size: 20px; transition: transform .2s; }
+nav button.active { color: var(--orange); }
+nav button.active .ico { transform: scale(1.15); }
+
+/* ── Screens ── */
+.screen { display: none; padding: 16px 16px 90px; position: relative; z-index: 1; }
+.screen.active { display: block; animation: fadeUp .3s ease; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+
+/* ── Section title ── */
+.sec-title {
+  font-family: 'Bebas Neue', cursive; font-size: 28px;
+  letter-spacing: 3px; color: var(--orange);
+  margin-bottom: 16px; line-height: 1;
+}
+.sec-title span { color: var(--text); }
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  position: relative; overflow: hidden;
+}
+.card::before {
+  content: ''; position: absolute; top: 0; right: 0;
+  width: 60px; height: 60px;
+  background: radial-gradient(circle at top right, var(--orange-glow), transparent);
+  pointer-events: none;
+}
+
+/* ── Metric grid ── */
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.metric-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 12px; padding: 12px 14px;
+  position: relative; overflow: hidden;
+}
+.metric-card .label { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.metric-card .value { font-size: 24px; font-weight: 900; color: var(--text); line-height: 1; }
+.metric-card .unit { font-size: 12px; color: var(--muted); }
+.metric-card .status { font-size: 11px; margin-top: 6px; }
+.status-ok { color: var(--green); }
+.status-warn { color: var(--yellow); }
+.status-bad { color: var(--red); }
+
+/* ── Progress bar ── */
+.prog-wrap { margin-top: 8px; }
+.prog-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+.prog-bar { height: 6px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.prog-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--orange), var(--orange2));
+  transition: width .6s ease;
+}
+.prog-fill.green { background: linear-gradient(90deg, #00c853, var(--green)); }
+.prog-fill.red   { background: linear-gradient(90deg, #c62828, var(--red)); }
+
+/* ── Overload table ── */
+.day-block { margin-bottom: 16px; }
+.day-header {
+  padding: 8px 14px; border-radius: 10px 10px 0 0;
+  font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  display: flex; align-items: center; gap: 8px;
+}
+.exercise-row {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-top: none; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.exercise-row:last-child { border-radius: 0 0 10px 10px; }
+.ex-name { flex: 1; font-size: 13px; font-weight: 500; }
+.ex-sets { font-size: 11px; color: var(--muted); }
+.week-input {
+  width: 52px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text); font-size: 12px;
+  padding: 4px 6px; text-align: center;
+  font-family: 'Tajawal', sans-serif;
+}
+.week-input:focus { outline: none; border-color: var(--orange); }
+.week-label { font-size: 10px; color: var(--muted); text-align: center; display: block; margin-bottom: 2px; }
+
+/* ── Weight chart ── */
+canvas { width: 100% !important; border-radius: 10px; }
+
+/* ── Log form ── */
+.log-form {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  margin-bottom: 14px;
+}
+.form-group label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
+.form-group input, .form-group textarea {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 8px; color: var(--text); padding: 8px 10px;
+  font-family: 'Tajawal', sans-serif; font-size: 13px;
+}
+.form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--orange); }
+.btn-add {
+  background: linear-gradient(135deg, var(--orange), var(--orange2));
+  border: none; border-radius: 10px; color: white;
+  font-family: 'Bebas Neue', cursive; font-size: 16px; letter-spacing: 2px;
+  padding: 12px; width: 100%; cursor: pointer; transition: opacity .2s;
+}
+.btn-add:active { opacity: .8; }
+
+/* ── Weight table ── */
+.log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.log-table th { background: var(--bg3); color: var(--muted); padding: 7px 10px; font-size: 10px; font-weight: 500; text-align: center; }
+.log-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.log-table tr:last-child td { border-bottom: none; }
+.change-pos { color: var(--red); }
+.change-neg { color: var(--green); }
+
+/* ── InBody comparison ── */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 4px; }
+.cmp-header {
+  background: var(--orange); color: white; padding: 8px 12px;
+  font-size: 12px; font-weight: 700; text-align: center; border-radius: 8px 8px 0 0;
+}
+.cmp-header.old { background: var(--bg3); color: var(--muted); }
+.cmp-metric { padding: 6px 12px; font-size: 12px; border-bottom: 1px solid var(--border); }
+.cmp-metric.label-col { font-size: 11px; color: var(--muted); }
+.compare-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; }
+.compare-table th { background: var(--bg3); color: var(--muted); padding: 8px; font-size: 11px; }
+.compare-table td { padding: 9px 10px; border-bottom: 1px solid var(--border); font-size: 12px; text-align: center; }
+.compare-table tr:last-child td { border-bottom: none; }
+.delta-pos { color: var(--red); }
+.delta-neg { color: var(--green); }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Install banner ── */
+#install-banner {
+  background: linear-gradient(135deg, #1a0a00, #0d0d1a);
+  border: 1px solid var(--orange);
+  border-radius: var(--r); padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 14px;
+}
+#install-banner .txt { flex: 1; font-size: 12px; color: var(--muted); }
+#install-banner .txt strong { color: var(--text); display: block; font-size: 13px; margin-bottom: 2px; }
+#install-btn { background: var(--orange); border: none; border-radius: 8px; color: white; padding: 8px 14px; font-family: 'Tajawal',sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div>
+    <div class="logo">🏋 FITNESS TRACKER</div>
+    <div class="subtitle">عقيل · 25 سنة · 171.9 سم</div>
+  </div>
+  <div style="text-align:left;font-size:11px;color:var(--muted);">
+    <div id="today-date"></div>
+    <div style="color:var(--orange);font-weight:700;" id="current-weight-top">76.9 كجم</div>
+  </div>
+</div>
+
+<!-- ══ DASHBOARD ══ -->
+<div class="screen active" id="screen-dash">
+  <div id="install-banner" style="display:none">
+    <div class="txt"><strong>📲 تثبيت التطبيق</strong>أضفه لشاشتك الرئيسية للوصول بدون إنترنت</div>
+    <button id="install-btn">تثبيت</button>
+  </div>
+
+  <div class="sec-title">DASH<span>BOARD</span></div>
+
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;font-weight:500;">📊 قياسات الجسم — InBody</div>
+    <div class="metric-grid" id="metric-grid"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500;">🎯 نسبة التقدم نحو الهدف</div>
+    <div id="progress-bars"></div>
+  </div>
+
+  <div class="card" style="background:linear-gradient(135deg,#1a0a00,var(--card))">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500;">🔥 الكارديو اليومي</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center;">
+      <div><div style="font-size:10px;color:var(--muted)">النوع</div><div style="font-size:16px;font-weight:700;color:var(--orange)">Treadmill</div></div>
+      <div><div style="font-size:10px;color:var(--muted)">المدة</div><div style="font-size:22px;font-weight:900;color:var(--text)">35<span style="font-size:12px;color:var(--muted)"> دقيقة</span></div></div>
+      <div><div style="font-size:10px;color:var(--muted)">الإعدادات</div><div style="font-size:14px;font-weight:700;color:var(--green)">Incline 8 · Speed 4</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ WEIGHT LOG ══ -->
+<div class="screen" id="screen-weight">
+  <div class="sec-title">WEIGHT<span> LOG</span></div>
+
+  <div class="card">
+    <div class="log-form">
+      <div class="form-group" style="grid-column:1/3">
+        <label>📅 التاريخ</label>
+        <input type="date" id="w-date">
+      </div>
+      <div class="form-group">
+        <label>⚖️ الوزن (كجم)</label>
+        <input type="number" id="w-val" placeholder="76.5" step="0.1" min="40" max="200">
+      </div>
+      <div class="form-group">
+        <label>📝 ملاحظات</label>
+        <input type="text" id="w-note" placeholder="اختياري">
+      </div>
+    </div>
+    <button class="btn-add" onclick="addWeight()">+ أضف قياس</button>
+  </div>
+
+  <div class="card" style="padding:12px;">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500;">📈 منحنى الوزن</div>
+    <canvas id="weight-chart" height="200"></canvas>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="log-table" id="weight-table">
+      <thead><tr><th>التاريخ</th><th>الوزن</th><th>التغيير</th><th>ملاحظات</th></tr></thead>
+      <tbody id="weight-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ OVERLOAD LOG ══ -->
+<div class="screen" id="screen-overload">
+  <div class="sec-title">OVER<span>LOAD</span></div>
+
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+    سجّل الأوزان المستخدمة كل أسبوع · الأرقام تُحفظ تلقائياً 💾
+  </div>
+
+  <div id="overload-days"></div>
+</div>
+
+<!-- ══ INBODY LOG ══ -->
+<div class="screen" id="screen-inbody">
+  <div class="sec-title">IN<span>BODY</span></div>
+
+  <div class="card">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500;">➕ أضف قراءة InBody جديدة</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div class="form-group" style="grid-column:1/3"><label>📅 التاريخ</label><input type="date" id="ib-date"></div>
+      <div class="form-group"><label>الوزن (كجم)</label><input type="number" id="ib-weight" step="0.1" placeholder="76.9"></div>
+      <div class="form-group"><label>BMI</label><input type="number" id="ib-bmi" step="0.1" placeholder="26.0"></div>
+      <div class="form-group"><label>نسبة الدهون %</label><input type="number" id="ib-fat-pct" step="0.1" placeholder="24.7"></div>
+      <div class="form-group"><label>كتلة الدهون (كجم)</label><input type="number" id="ib-fat-kg" step="0.1" placeholder="18.9"></div>
+      <div class="form-group"><label>الدهون الحشوية</label><input type="number" id="ib-visc" step="1" placeholder="11"></div>
+      <div class="form-group"><label>كتلة العضلات (كجم)</label><input type="number" id="ib-muscle" step="0.1" placeholder="55.2"></div>
+      <div class="form-group"><label>نسبة الماء %</label><input type="number" id="ib-water" step="0.1" placeholder="54.0"></div>
+      <div class="form-group"><label>BMR (سعرات)</label><input type="number" id="ib-bmr" step="1" placeholder="1856"></div>
+      <div class="form-group"><label>الملح العظمي (كجم)</label><input type="number" id="ib-bone" step="0.1" placeholder="2.9"></div>
+    </div>
+    <button class="btn-add" onclick="addInBody()">+ أضف قراءة</button>
+  </div>
+
+  <div class="card" id="inbody-comparison" style="display:none">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500;">⚖️ مقارنة آخر قراءتين</div>
+    <div id="comparison-table"></div>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden;">
+    <table class="compare-table" id="inbody-history">
+      <thead><tr><th>التاريخ</th><th>الوزن</th><th>دهون%</th><th>عضلات</th><th>BMR</th></tr></thead>
+      <tbody id="inbody-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══ NAV ══ -->
+<nav>
+  <button class="active" onclick="showScreen('dash',this)">
+    <span class="ico">📊</span>Dashboard
+  </button>
+  <button onclick="showScreen('weight',this)">
+    <span class="ico">⚖️</span>الوزن
+  </button>
+  <button onclick="showScreen('overload',this)">
+    <span class="ico">💪</span>Overload
+  </button>
+  <button onclick="showScreen('inbody',this)">
+    <span class="ico">🔬</span>InBody
+  </button>
+</nav>
+
+<script>
+// ─── Data store ───────────────────────────────────────────────
+const STORE = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)) || []; } catch { return []; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+};
+
+// ─── Baseline ─────────────────────────────────────────────────
+const BASELINE = {
+  date: '2026-04-22',
+  weight: 76.9, bmi: 26.0, fatPct: 24.7, fatKg: 18.9,
+  visc: 11, muscle: 55.2, water: 54.0, bmr: 1856, bone: 2.9
+};
+
+// ─── Navigation ───────────────────────────────────────────────
+function showScreen(id, btn) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'weight') renderWeightChart();
+  if (id === 'inbody') renderInBodyHistory();
+}
+
+// ─── Date helpers ─────────────────────────────────────────────
+function fmtDate(str) {
+  if (!str) return '—';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('ar-EG', {day:'2-digit',month:'2-digit',year:'numeric'});
+}
+
+// ─── DASHBOARD ────────────────────────────────────────────────
+function renderDashboard() {
+  const weights = STORE.get('weights');
+  const latest = weights.length ? weights[weights.length-1].val : BASELINE.weight;
+  document.getElementById('current-weight-top').textContent = latest.toFixed(1) + ' كجم';
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('ar-EG',{weekday:'short',day:'numeric',month:'short'});
+
+  const metrics = [
+    { label: 'الوزن', val: latest, unit: 'كجم', ideal: '71.8–73.8', ok: latest <= 73.8, icon: '⚖️' },
+    { label: 'BMI', val: BASELINE.bmi, unit: '', ideal: '18.5–24.9', ok: BASELINE.bmi <= 24.9, icon: '📐' },
+    { label: 'نسبة الدهون', val: BASELINE.fatPct, unit: '%', ideal: '10–21%', ok: BASELINE.fatPct <= 21, icon: '🔥' },
+    { label: 'كتلة الدهون', val: BASELINE.fatKg, unit: 'كجم', ideal: '7.6–16.1', ok: BASELINE.fatKg <= 16.1, icon: '📉' },
+    { label: 'الدهون الحشوية', val: BASELINE.visc, unit: '', ideal: '1–10', ok: BASELINE.visc <= 10, icon: '🫀' },
+    { label: 'كتلة العضلات', val: BASELINE.muscle, unit: 'كجم', ideal: '49.4–59.4', ok: BASELINE.muscle >= 49.4, icon: '💪' },
+    { label: 'نسبة الماء', val: BASELINE.water, unit: '%', ideal: '55–65%', ok: BASELINE.water >= 55, icon: '💧' },
+    { label: 'BMR', val: BASELINE.bmr, unit: 'سعر', ideal: '≥1949', ok: BASELINE.bmr >= 1949, icon: '⚡' },
+    { label: 'الملح العظمي', val: BASELINE.bone, unit: 'كجم', ideal: '2.9–3.5', ok: BASELINE.bone >= 2.9, icon: '🦴' },
+  ];
+
+  const grid = document.getElementById('metric-grid');
+  grid.innerHTML = metrics.slice(0, 8).map(m => `
+    <div class="metric-card">
+      <div class="label">${m.icon} ${m.label}</div>
+      <div class="value">${m.val}<span class="unit"> ${m.unit}</span></div>
+      <div class="status ${m.ok ? 'status-ok' : 'status-warn'}">${m.ok ? '✅ ضمن المعدل' : '⚠ يحتاج تحسين'}</div>
+      <div style="font-size:10px;color:var(--muted);margin-top:3px;">المثالي: ${m.ideal}</div>
+    </div>
+  `).join('');
+
+  // Progress bars
+  const progItems = [
+    { label: 'فقدان الوزن', current: latest, target: 73.8, baseline: BASELINE.weight, unit: 'كجم', invert: true },
+    { label: 'خفض الدهون', current: BASELINE.fatPct, target: 21, baseline: BASELINE.fatPct, unit: '%', invert: true },
+    { label: 'بناء العضلات', current: BASELINE.muscle, target: 59.4, baseline: 49.4, unit: 'كجم', invert: false },
+  ];
+  document.getElementById('progress-bars').innerHTML = progItems.map(p => {
+    let pct;
+    if (p.invert) {
+      pct = Math.min(100, Math.max(0, ((p.baseline - p.current) / (p.baseline - p.target)) * 100));
+    } else {
+      pct = Math.min(100, Math.max(0, ((p.current - p.baseline) / (p.target - p.baseline)) * 100));
+    }
+    const color = pct >= 80 ? 'green' : pct >= 40 ? '' : 'red';
+    return `
+      <div class="prog-wrap" style="margin-bottom:10px;">
+        <div class="prog-label"><span>${p.label}</span><span>${pct.toFixed(0)}%</span></div>
+        <div class="prog-bar"><div class="prog-fill ${color}" style="width:${pct}%"></div></div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px;">${p.current} ${p.unit} → هدف ${p.target} ${p.unit}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── WEIGHT LOG ───────────────────────────────────────────────
+function addWeight() {
+  const d = document.getElementById('w-date').value;
+  const v = parseFloat(document.getElementById('w-val').value);
+  const n = document.getElementById('w-note').value.trim();
+  if (!d || isNaN(v)) return alert('أدخل التاريخ والوزن');
+  const weights = STORE.get('weights');
+  weights.push({ date: d, val: v, note: n });
+  weights.sort((a,b) => a.date.localeCompare(b.date));
+  STORE.set('weights', weights);
+  document.getElementById('w-val').value = '';
+  document.getElementById('w-note').value = '';
+  renderWeightTable();
+  renderWeightChart();
+  renderDashboard();
+}
+
+function renderWeightTable() {
+  const all = [{ date: BASELINE.date, val: BASELINE.weight, note: 'Baseline' }, ...STORE.get('weights')];
+  const tbody = document.getElementById('weight-tbody');
+  tbody.innerHTML = [...all].reverse().map((r, i, arr) => {
+    const prev = arr[i+1];
+    const delta = prev ? (r.val - prev.val) : null;
+    const deltaStr = delta === null ? '—' : (delta > 0 ? `<span class="change-pos">+${delta.toFixed(1)}</span>` : `<span class="change-neg">${delta.toFixed(1)}</span>`);
+    return `<tr><td>${fmtDate(r.date)}</td><td>${r.val.toFixed(1)}</td><td>${deltaStr}</td><td style="color:var(--muted);font-size:11px;">${r.note||'—'}</td></tr>`;
+  }).join('');
+}
+
+function renderWeightChart() {
+  const all = [{ date: BASELINE.date, val: BASELINE.weight }, ...STORE.get('weights')];
+  const canvas = document.getElementById('weight-chart');
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 300;
+  canvas.width = W * devicePixelRatio;
+  canvas.height = 200 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const w = W, h = 200;
+  ctx.clearRect(0, 0, w, h);
+  if (all.length < 2) {
+    ctx.fillStyle = '#8888aa';
+    ctx.font = '13px Tajawal';
+    ctx.textAlign = 'center';
+    ctx.fillText('أضف قياسات لعرض الرسم البياني', w/2, h/2);
+    return;
+  }
+  const vals = all.map(r => r.val);
+  const minV = Math.min(...vals) - 1, maxV = Math.max(...vals) + 1;
+  const pad = { l: 40, r: 16, t: 16, b: 28 };
+  const cw = w - pad.l - pad.r, ch = h - pad.t - pad.b;
+  const xScale = i => pad.l + (i / (all.length-1)) * cw;
+  const yScale = v => pad.t + (1 - (v - minV) / (maxV - minV)) * ch;
+
+  // Target line
+  const targetW = 73.8;
+  const ty = yScale(targetW);
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = '#00e676';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.l, ty); ctx.lineTo(pad.l + cw, ty); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#00e676'; ctx.font = '10px Tajawal';
+  ctx.fillText('هدف ' + targetW, pad.l + cw - 40, ty - 4);
+
+  // Area fill
+  const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + ch);
+  grad.addColorStop(0, 'rgba(255,107,0,0.35)');
+  grad.addColorStop(1, 'rgba(255,107,0,0.02)');
+  ctx.beginPath();
+  ctx.moveTo(xScale(0), yScale(vals[0]));
+  all.forEach((r, i) => ctx.lineTo(xScale(i), yScale(r.val)));
+  ctx.lineTo(xScale(all.length-1), pad.t + ch);
+  ctx.lineTo(xScale(0), pad.t + ch);
+  ctx.closePath();
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(xScale(0), yScale(vals[0]));
+  all.forEach((r, i) => ctx.lineTo(xScale(i), yScale(r.val)));
+  ctx.strokeStyle = '#ff6b00'; ctx.lineWidth = 2.5; ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // Dots + labels
+  all.forEach((r, i) => {
+    ctx.beginPath(); ctx.arc(xScale(i), yScale(r.val), 4, 0, Math.PI*2);
+    ctx.fillStyle = '#ff6b00'; ctx.fill();
+    ctx.fillStyle = '#f0f0ff'; ctx.font = '9px Tajawal'; ctx.textAlign = 'center';
+    ctx.fillText(r.val.toFixed(1), xScale(i), yScale(r.val) - 9);
+  });
+
+  // Y axis labels
+  ctx.fillStyle = '#8888aa'; ctx.font = '9px Tajawal'; ctx.textAlign = 'right';
+  [minV+1, (minV+maxV)/2, maxV-1].forEach(v => {
+    ctx.fillText(v.toFixed(0), pad.l - 4, yScale(v) + 3);
+  });
+}
+
+// ─── PROGRESSIVE OVERLOAD ─────────────────────────────────────
+const OVERLOAD_DATA = [
+  { day: 'DAY 1 — PUSH', color: '#ff6b00', exercises: [
+    {name:'Incline Chest Press', sets:'3×8-12'},
+    {name:'Chest Fly Machine', sets:'2×8-10'},
+    {name:'Shoulder Press Machine', sets:'2×10-12'},
+    {name:'DB Lateral Raises', sets:'3×8-12'},
+    {name:'SA Triceps Overhead', sets:'2×8-12'},
+    {name:'Rope Triceps Pushdown', sets:'2×8-12'},
+    {name:'Abdominal Crunches', sets:'3×8-12'},
+  ]},
+  { day: 'DAY 2 — PULL', color: '#29b6f6', exercises: [
+    {name:'Wide Cable Seated Row', sets:'3×8-12'},
+    {name:'Wide Grip Lat Pulldown', sets:'2×8-12'},
+    {name:'Rear Delt Fly Machine', sets:'3×8-10'},
+    {name:'Close Grip Seated Row', sets:'2×10-12'},
+    {name:'Preacher Curl Machine', sets:'2×8-12'},
+    {name:'Biceps Bayesian Curl', sets:'2×8-12'},
+    {name:'Cable Reverse Curl', sets:'2×8-12'},
+  ]},
+  { day: 'DAY 3 — LEGS', color: '#00e676', exercises: [
+    {name:'Hack Squat Machine', sets:'3×8-12'},
+    {name:'Seated Leg Curl', sets:'2×8-12'},
+    {name:'Leg Extension Machine', sets:'3×8-12'},
+    {name:'Adductors Machine', sets:'3×10-12'},
+    {name:'Smith Standing Calf Raises', sets:'3×10-12'},
+    {name:'Abdominal Crunches', sets:'3×8-12'},
+    {name:'Smith Shrugs', sets:'3×8-12'},
+  ]},
+  { day: 'DAY 5 — CHEST & BACK', color: '#ce93d8', exercises: [
+    {name:'Incline Chest Press', sets:'3×8-12'},
+    {name:'Wide Cable Seated Row', sets:'3×8-12'},
+    {name:'Chest Fly Machine', sets:'2×8-12'},
+    {name:'Wide Grip Lat Pulldown', sets:'2×8-12'},
+    {name:'Close Grip Seated Row', sets:'2×8-12'},
+    {name:'Decline Fly Machine', sets:'3×10-12'},
+    {name:'Abdominal Crunches', sets:'2×8-12'},
+  ]},
+  { day: 'DAY 6 — SHOULDERS & ARMS', color: '#ef9a9a', exercises: [
+    {name:'DB Shoulder Press', sets:'3×10-12'},
+    {name:'DB Lateral Raises', sets:'3×8-12'},
+    {name:'Rear Delt Fly Machine', sets:'2×8-12'},
+    {name:'Rope Overhead Extension', sets:'3×8-12'},
+    {name:'Preacher Curl Machine', sets:'3×8-12'},
+    {name:'Rope Triceps Pushdown', sets:'2×10-12'},
+    {name:'Cable Reverse Curl', sets:'2×10-12'},
+  ]},
+];
+
+function getOverloadKey(day, ex) {
+  return 'ol_' + btoa(encodeURIComponent(day + '::' + ex)).replace(/=/g,'');
+}
+
+function renderOverloadDays() {
+  const container = document.getElementById('overload-days');
+  const currentWeek = parseInt(document.getElementById('week-selector')?.value || '1');
+  container.innerHTML = OVERLOAD_DATA.map(d => `
+    <div class="day-block">
+      <div class="day-header" style="background:${d.color}20;border:1px solid ${d.color}44;color:${d.color};">
+        <span>💥</span><span>${d.day}</span>
+      </div>
+      ${d.exercises.map(ex => {
+        const key = getOverloadKey(d.day, ex.name);
+        const weeks = STORE.get(key + '_arr') || Array(8).fill('');
+        return `<div class="exercise-row">
+          <div class="ex-name">${ex.name}<div class="ex-sets">${ex.sets}</div></div>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span class="week-label">W${currentWeek}</span>
+            <input class="week-input" type="number" step="2.5" min="0" max="300"
+              value="${weeks[currentWeek-1] || ''}"
+              placeholder="كجم"
+              onchange="saveOverload('${key}', ${currentWeek-1}, this.value)">
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+function saveOverload(key, weekIdx, val) {
+  const arr = STORE.get(key + '_arr') || Array(8).fill('');
+  arr[weekIdx] = val;
+  STORE.set(key + '_arr', arr);
+}
+
+function buildOverloadScreen() {
+  const screen = document.getElementById('screen-overload');
+  const sel = document.createElement('div');
+  sel.className = 'card';
+  sel.style.marginBottom = '12px';
+  sel.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:500;">📅 اختر الأسبوع</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      ${Array.from({length:8},(_,i)=>`
+        <button onclick="selectWeek(${i+1})" id="wb-${i+1}"
+          style="flex:1;min-width:36px;padding:6px 4px;border-radius:8px;border:1px solid var(--border);
+                 background:${i===0?'var(--orange)':'var(--bg3)'};
+                 color:${i===0?'white':'var(--muted)'};
+                 font-family:Tajawal,sans-serif;font-size:13px;cursor:pointer;font-weight:600;">
+          ${i+1}
+        </button>`).join('')}
+    </div>
+  `;
+  screen.insertBefore(sel, document.getElementById('overload-days'));
+}
+
+let currentWeekSel = 1;
+function selectWeek(w) {
+  currentWeekSel = w;
+  for (let i=1;i<=8;i++) {
+    const btn = document.getElementById('wb-'+i);
+    if (btn) {
+      btn.style.background = i===w ? 'var(--orange)' : 'var(--bg3)';
+      btn.style.color = i===w ? 'white' : 'var(--muted)';
+    }
+  }
+  renderOverloadDaysWeek(w);
+}
+
+function renderOverloadDaysWeek(w) {
+  const container = document.getElementById('overload-days');
+  container.innerHTML = OVERLOAD_DATA.map(d => `
+    <div class="day-block">
+      <div class="day-header" style="background:${d.color}20;border:1px solid ${d.color}44;color:${d.color};">
+        <span>💥</span><span>${d.day}</span>
+      </div>
+      ${d.exercises.map(ex => {
+        const key = getOverloadKey(d.day, ex.name);
+        const arr = STORE.get(key + '_arr') || Array(8).fill('');
+        const prev = w > 1 ? arr[w-2] : '';
+        return `<div class="exercise-row">
+          <div class="ex-name">${ex.name}<div class="ex-sets">${ex.sets}${prev?` · السابق: <span style="color:var(--muted)">${prev} كجم</span>`:''}</div></div>
+          <div style="display:flex;flex-direction:column;gap:2px;align-items:center">
+            <span class="week-label">أسبوع ${w}</span>
+            <input class="week-input" type="number" step="2.5" min="0" max="300"
+              value="${arr[w-1] || ''}" placeholder="كجم"
+              onchange="saveOverload('${key}', ${w-1}, this.value)">
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+// ─── INBODY LOG ───────────────────────────────────────────────
+function addInBody() {
+  const get = id => document.getElementById(id).value;
+  const d = get('ib-date');
+  if (!d || !get('ib-weight')) return alert('أدخل التاريخ والوزن على الأقل');
+  const entry = {
+    date: d, weight: +get('ib-weight'), bmi: +get('ib-bmi'),
+    fatPct: +get('ib-fat-pct'), fatKg: +get('ib-fat-kg'), visc: +get('ib-visc'),
+    muscle: +get('ib-muscle'), water: +get('ib-water'), bmr: +get('ib-bmr'), bone: +get('ib-bone')
+  };
+  const logs = STORE.get('inbody');
+  logs.push(entry);
+  logs.sort((a,b) => a.date.localeCompare(b.date));
+  STORE.set('inbody', logs);
+  ['ib-date','ib-weight','ib-bmi','ib-fat-pct','ib-fat-kg','ib-visc','ib-muscle','ib-water','ib-bmr','ib-bone']
+    .forEach(id => document.getElementById(id).value = '');
+  renderInBodyHistory();
+}
+
+function renderInBodyHistory() {
+  const logs = [BASELINE, ...STORE.get('inbody').map(e => ({
+    date: e.date, weight: e.weight, bmi: e.bmi, fatPct: e.fatPct,
+    fatKg: e.fatKg, visc: e.visc, muscle: e.muscle, water: e.water, bmr: e.bmr, bone: e.bone
+  }))];
+
+  // Table
+  const tbody = document.getElementById('inbody-tbody');
+  tbody.innerHTML = [...logs].reverse().map(r => `
+    <tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.weight||'—'}</td>
+      <td>${r.fatPct!=null?r.fatPct+'%':'—'}</td>
+      <td>${r.muscle||'—'}</td>
+      <td>${r.bmr||'—'}</td>
+    </tr>
+  `).join('');
+
+  // Comparison
+  if (logs.length >= 2) {
+    const prev = logs[logs.length-2];
+    const curr = logs[logs.length-1];
+    const compCard = document.getElementById('inbody-comparison');
+    compCard.style.display = 'block';
+    const fields = [
+      {label:'الوزن (كجم)',   prev:prev.weight,  curr:curr.weight,  invert:true},
+      {label:'BMI',           prev:prev.bmi,     curr:curr.bmi,     invert:true},
+      {label:'الدهون %',      prev:prev.fatPct,  curr:curr.fatPct,  invert:true},
+      {label:'الدهون (كجم)',  prev:prev.fatKg,   curr:curr.fatKg,   invert:true},
+      {label:'الحشوي',        prev:prev.visc,    curr:curr.visc,    invert:true},
+      {label:'العضلات (كجم)', prev:prev.muscle,  curr:curr.muscle,  invert:false},
+      {label:'الماء %',       prev:prev.water,   curr:curr.water,   invert:false},
+      {label:'BMR',           prev:prev.bmr,     curr:curr.bmr,     invert:false},
+    ];
+    document.getElementById('comparison-table').innerHTML = `
+      <table class="compare-table">
+        <thead><tr><th>المقياس</th><th>${fmtDate(prev.date)}</th><th>${fmtDate(curr.date)}</th><th>التغيير</th></tr></thead>
+        <tbody>
+          ${fields.map(f => {
+            if (!f.prev || !f.curr) return '';
+            const delta = (f.curr - f.prev).toFixed(1);
+            const good = f.invert ? delta < 0 : delta > 0;
+            const cls = delta == 0 ? '' : (good ? 'delta-neg' : 'delta-pos');
+            const sign = delta > 0 ? '+' : '';
+            return `<tr>
+              <td style="text-align:right;color:var(--muted);font-size:11px;">${f.label}</td>
+              <td>${f.prev}</td>
+              <td style="font-weight:700">${f.curr}</td>
+              <td class="${cls}">${sign}${delta}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+}
+
+// ─── PWA Install ──────────────────────────────────────────────
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'flex';
+});
+document.getElementById('install-btn').onclick = async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  if (outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+  deferredPrompt = null;
+};
+
+// ─── Init ─────────────────────────────────────────────────────
+document.getElementById('w-date').value = new Date().toISOString().split('T')[0];
+document.getElementById('ib-date').value = new Date().toISOString().split('T')[0];
+
+renderDashboard();
+renderWeightTable();
+buildOverloadScreen();
+renderOverloadDaysWeek(1);
+renderInBodyHistory();
+
+// Service Worker
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'fitness-v1';
+    const ASSETS = [location.href];
+    self.addEventListener('install', e => e.waitUntil(caches.open(CACHE).then(c => c.add(location.href))));
+    self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+  `;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+}
+</script>
+</body>
+</html>
